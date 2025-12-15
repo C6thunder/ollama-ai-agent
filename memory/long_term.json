@@ -22,5 +22,13 @@
     "content": "用户住在上海",
     "metadata": {},
     "importance": 0.8
+  },
+  {
+    "id": "04d861e361e6",
+    "timestamp": 1765807894.452123,
+    "type": "persistent",
+    "content": "Python项目开发最佳实践总结",
+    "metadata": {},
+    "importance": 0.9
   }
 ]

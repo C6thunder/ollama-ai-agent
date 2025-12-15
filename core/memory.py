@@ -8,11 +8,13 @@
 import os
 import json
 import time
+import re
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import hashlib
+from collections import defaultdict, Counter
 
 
 @dataclass
@@ -47,6 +49,61 @@ class ConversationMemory:
         self.entries: List[MemoryEntry] = []
         self.session_start = time.time()
 
+        # 语义索引 - 关键词到记忆条目ID的映射
+        self.semantic_index: Dict[str, Set[str]] = defaultdict(set)
+
+        # 停用词列表（常见的无意义词汇）
+        self.stop_words = {
+            '的', '了', '是', '在', '我', '你', '他', '她', '它',
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at',
+            'to', 'for', 'of', 'with', 'by', 'from', 'as', 'that',
+            'this', 'these', 'those', 'it', 'its', 'be', 'have',
+            'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could'
+        }
+
+    def _extract_keywords(self, text: str, max_keywords: int = 10) -> List[str]:
+        """
+        从文本中提取关键词
+
+        Args:
+            text: 输入文本
+            max_keywords: 最大关键词数量
+
+        Returns:
+            关键词列表
+        """
+        # 转换为小写并提取单词
+        text = text.lower()
+
+        # 使用正则提取单词（包含中文字符、英文单词）
+        words = re.findall(r'[\w\u4e00-\u9fff]+', text)
+
+        # 过滤停用词和短词
+        keywords = [
+            word for word in words
+            if word not in self.stop_words and len(word) >= 2
+        ]
+
+        # 统计词频并取前N个
+        word_freq = Counter(keywords)
+        top_keywords = [word for word, _ in word_freq.most_common(max_keywords)]
+
+        return top_keywords
+
+    def _update_semantic_index(self, entry: MemoryEntry):
+        """
+        更新语义索引
+
+        Args:
+            entry: 记忆条目
+        """
+        # 提取关键词
+        keywords = self._extract_keywords(entry.content)
+
+        # 将条目ID添加到关键词索引中
+        for keyword in keywords:
+            self.semantic_index[keyword].add(entry.id)
+
     def add(
         self,
         content: str,
@@ -79,6 +136,9 @@ class ConversationMemory:
             metadata=metadata or {},
             importance=importance,
         )
+
+        # 更新语义索引
+        self._update_semantic_index(entry)
 
         self.entries.append(entry)
 
@@ -127,6 +187,75 @@ class ConversationMemory:
             e for e in self.entries
             if query in e.content.lower()
         ]
+
+    def semantic_search(self, query: str, limit: int = 10) -> List[Tuple[MemoryEntry, float]]:
+        """
+        语义搜索记忆
+
+        Args:
+            query: 查询关键词
+            limit: 返回结果数量限制
+
+        Returns:
+            (记忆条目, 匹配分数) 的列表，按分数降序排列
+        """
+        # 提取查询关键词
+        query_keywords = self._extract_keywords(query, max_keywords=5)
+
+        if not query_keywords:
+            return []
+
+        # 查找匹配的记忆条目ID
+        matched_ids: Set[str] = set()
+        keyword_scores: Dict[str, int] = defaultdict(int)
+
+        for keyword in query_keywords:
+            # 计算关键词权重（基于长度和频率）
+            weight = len(keyword) + 1
+
+            if keyword in self.semantic_index:
+                matched_ids.update(self.semantic_index[keyword])
+                keyword_scores[keyword] = weight
+
+        # 计算每个记忆条目的匹配分数
+        entry_scores: Dict[str, float] = defaultdict(float)
+        for mem_id in matched_ids:
+            # 查找对应的记忆条目
+            for entry in self.entries:
+                if entry.id == mem_id:
+                    # 计算匹配分数：基于关键词权重和条目重要性
+                    entry_keywords = self._extract_keywords(entry.content, max_keywords=20)
+                    match_score = sum(keyword_scores.get(kw, 0) for kw in entry_keywords if kw in query_keywords)
+                    final_score = match_score * entry.importance
+                    entry_scores[mem_id] = final_score
+                    break
+
+        # 按分数排序并返回
+        sorted_results = sorted(
+            [(self._get_entry_by_id(mem_id), score) for mem_id, score in entry_scores.items()],
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        # 过滤掉分数为0的结果
+        filtered_results = [(entry, score) for entry, score in sorted_results if score > 0]
+
+        return filtered_results[:limit]
+
+    def _get_entry_by_id(self, mem_id: str) -> Optional[MemoryEntry]:
+        """
+        根据ID获取记忆条目
+
+        Args:
+            mem_id: 记忆条目ID
+
+        Returns:
+            记忆条目或None
+        """
+        for entry in self.entries:
+            if entry.id == mem_id:
+                return entry
+        return None
 
     def get_context(self, limit: int = 20) -> str:
         """
@@ -404,7 +533,7 @@ class MemoryManager:
         return context
 
     def search_memory(self, query: str) -> List[MemoryEntry]:
-        """搜索记忆"""
+        """搜索记忆（简单关键词匹配）"""
         # 搜索对话记忆
         conversation_matches = self.conversation_memory.search(query)
 
@@ -418,6 +547,55 @@ class MemoryManager:
         all_matches.sort(key=lambda x: x.importance, reverse=True)
 
         return all_matches
+
+    def semantic_search_memory(self, query: str, limit: int = 10) -> List[Tuple[MemoryEntry, float]]:
+        """
+        语义搜索记忆
+
+        Args:
+            query: 查询关键词
+            limit: 返回结果数量限制
+
+        Returns:
+            (记忆条目, 匹配分数) 的列表，按分数降序排列
+        """
+        # 语义搜索对话记忆
+        conversation_results = self.conversation_memory.semantic_search(query, limit=limit)
+
+        # 对长期记忆也进行简单关键词搜索（可以进一步优化为语义搜索）
+        long_term_matches = self.persistent_memory.search_long_term(query, limit=limit)
+
+        # 合并结果
+        combined_results: Dict[str, Tuple[MemoryEntry, float]] = {}
+
+        # 添加对话记忆结果
+        for entry, score in conversation_results:
+            combined_results[entry.id] = (entry, score)
+
+        # 添加长期记忆结果（赋予较低的基础分数）
+        for entry in long_term_matches:
+            if entry.id not in combined_results:
+                combined_results[entry.id] = (entry, entry.importance * 5.0)
+
+        # 转换为列表并按分数排序
+        all_results = list(combined_results.values())
+        all_results.sort(key=lambda x: x[1], reverse=True)
+
+        return all_results[:limit]
+
+    def get_related_memories(self, query: str, limit: int = 5) -> List[MemoryEntry]:
+        """
+        获取相关记忆（语义搜索的简化接口）
+
+        Args:
+            query: 查询关键词
+            limit: 返回结果数量限制
+
+        Returns:
+            相关记忆条目列表
+        """
+        results = self.semantic_search_memory(query, limit)
+        return [entry for entry, _ in results]
 
     def save_session(self):
         """保存当前会话"""

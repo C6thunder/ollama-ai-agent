@@ -179,10 +179,12 @@ class WebSearchTool(BaseTool):
                     results = self._parse_baidu(response.text, num_results)
 
             elif engine == "google":
-                # 注意：Google有反爬虫机制，这里仅供参考
-                url = f"https://www.google.com/search?q={quote(query)}"
+                # Google有反爬虫机制，降级到DuckDuckGo
+                print(f"[WebSearch] Google搜索引擎受限，降级到DuckDuckGo")
+                engine = "duckduckgo"
+                url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
                 response = requests.get(url, headers=headers, timeout=10)
-                results = [{"title": "Google搜索", "snippet": "Google搜索引擎需要特殊处理", "url": url}]
+                results = self._parse_duckduckgo(response.text, num_results)
 
             elif engine == "bing":
                 # Bing搜索API需要密钥，这里提供基础实现
