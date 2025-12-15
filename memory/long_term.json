@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bec85cc218db",
+    "timestamp": 1765777739.096928,
+    "type": "persistent",
+    "content": "用户学习了 Python 的列表和元组",
+    "metadata": {},
+    "importance": 0.9
+  },
+  {
+    "id": "fe85ae2a7fab",
+    "timestamp": 1765777739.0971644,
+    "type": "persistent",
+    "content": "用户名为张三",
+    "metadata": {},
+    "importance": 0.9
+  },
+  {
+    "id": "e952c3984ea2",
+    "timestamp": 1765777739.0972583,
+    "type": "persistent",
+    "content": "用户住在上海",
+    "metadata": {},
+    "importance": 0.8
+  }
+]

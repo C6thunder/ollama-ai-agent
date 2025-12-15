@@ -1,0 +1,12 @@
+# LangChain 核心框架
+langchain>=0.1.0
+langchain-core>=0.1.0
+
+# LangChain 社区扩展
+langchain-community>=0.0.10
+
+# 可选：LangSmith (用于调试和监控)
+# langsmith>=0.0.80
+
+# 其他依赖
+requests>=2.31.0
