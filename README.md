@@ -76,6 +76,8 @@ ollama pull mistral:7b
 ### 4. 安装依赖
 
 ```bash
+conda create -n ollama-agent python=3.12
+conda activate ollama-agent
 pip install -r requirements.txt
 ```
 
@@ -120,7 +122,7 @@ python main.py
 执行单个任务：
 
 ```bash
-python main.py -t "请读取 /home/user/documents/readme.txt 文件内容"
+python main.py -t "请读取./README.md文件内容"
 ```
 
 ### 其他命令
