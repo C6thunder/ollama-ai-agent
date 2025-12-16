@@ -1,12 +1,28 @@
-# LangChain 核心框架
-langchain>=0.1.0
-langchain-core>=0.1.0
+# AI Agent 项目依赖包
+# ========================================
 
-# LangChain 社区扩展
-langchain-community>=0.0.10
+# 核心框架
+langchain>=1.2.0,<2.0.0
+langchain-core>=1.2.0,<2.0.0
+langchain-ollama>=0.1.0
 
-# 可选：LangSmith (用于调试和监控)
-# langsmith>=0.0.80
+# 系统信息
+psutil>=5.8.0
 
-# 其他依赖
-requests>=2.31.0
+# 日期时间处理
+# (python-dateutil 通常随其他包自动安装)
+# python-dateutil>=2.8.0
+
+# 向量计算 (可选，用于高级嵌入)
+numpy>=1.21.0
+
+# 文档处理
+# (内置库：json, csv, yaml 已包含在 Python 标准库中)
+
+# 机器学习 (可选，用于高级功能)
+# scikit-learn>=1.0.0
+
+# 开发工具 (可选)
+# pytest>=7.0.0
+# black>=22.0.0
+# flake8>=4.0.0

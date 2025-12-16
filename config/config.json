@@ -1,0 +1,106 @@
+{
+  "model": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:7b",
+    "temperature": 0.2,
+    "num_ctx": 8192
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/agent.log"
+  },
+  "memory": {
+    "max_messages": 100,
+    "persist": false
+  },
+  "tools": {
+    "shell": {
+      "enabled": true,
+      "timeout": 30,
+      "command_timeout": 10
+    },
+    "file": {
+      "enabled": true,
+      "auto_create_dir": true,
+      "max_file_size": 100000,
+      "max_read_size": 10000,
+      "allowed_extensions": [".py", ".txt", ".md", ".json", ".yml", ".yaml", ".sh", ".js", ".html", ".css"],
+      "blocked_extensions": [".exe", ".bat", ".sh", ".ps1", ".bin", ".com"]
+    }
+  },
+  "security": {
+    "enabled": true,
+    "base_directory": "/home/thunder/work/ai-agent-project",
+    "allowed_directories": [
+      "/home/thunder/work/ai-agent-project"
+    ],
+    "blocked_directories": [
+      "/etc",
+      "/root",
+      "/var/log",
+      "/usr",
+      "/bin",
+      "/sbin",
+      "/boot",
+      "/sys",
+      "/proc",
+      "/dev"
+    ],
+    "blocked_commands": [
+      "rm -rf /",
+      "sudo",
+      "su",
+      "bash",
+      "sh",
+      "zsh",
+      "chmod",
+      "chown",
+      "passwd",
+      "useradd",
+      "userdel",
+      "usermod",
+      "groupadd",
+      "groupdel",
+      "crontab",
+      "service",
+      "systemctl",
+      "mount",
+      "umount",
+      "fdisk",
+      "dd",
+      "mkfs",
+      "shutdown",
+      "reboot",
+      "halt",
+      "wget",
+      "curl",
+      "nc",
+      "netcat"
+    ],
+    "dangerous_patterns": [
+      "rm\\s+-rf\\s+/",
+      "sudo\\s+",
+      "su\\s+",
+      ">\\s*/etc/",
+      "wget\\s+",
+      "curl\\s+",
+      "nc\\s+",
+      "bash\\s+",
+      "sh\\s+",
+      "chmod\\s+",
+      "chown\\s+"
+    ],
+    "max_input_length": 2000,
+    "max_output_size": 10000,
+    "max_files_list": 200,
+    "allowed_chars": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./: ()[]{}\"'*",
+    "blocked_chars": [";", "|", "&", "`", "$", "<", ">", "\\", "?", "!"],
+    "file_sanitization": true,
+    "symlink_check": true,
+    "path_traversal_check": true,
+    "command_whitelist_mode": false,
+    "directory_whitelist_mode": false,
+    "log_security_events": true
+  }
+}
