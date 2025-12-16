@@ -50,7 +50,7 @@ ollama pull qwen2.5-coder:7b
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone git@github.com:C6thunder/ollama-ai-agent.git
 cd ai-agent-project
 
 # 安装依赖
